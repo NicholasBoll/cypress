@@ -4654,12 +4654,12 @@ declare namespace Cypress {
      * Fires whenever a command emits this event so it can be displayed in the Command Log. Useful to see how internal cypress commands utilize the {% url 'Cypress.log()' cypress-log %} API.
      * @see https://on.cypress.io/catalog-of-events#App-Events
      */
-    (action: 'log:added', fn: (log: any, interactive: boolean) => void): void
+    (action: 'log:added', fn: (attrs: LogConfig, log: Log) => void): void
     /**
      * Fires whenever a command's attributes changes. This event is debounced to prevent it from firing too quickly and too often. Useful to see how internal cypress commands utilize the {% url 'Cypress.log()' cypress-log %} API.
      * @see https://on.cypress.io/catalog-of-events#App-Events
      */
-    (action: 'log:changed', fn: (log: any, interactive: boolean) => void): void
+    (action: 'log:changed', fn: (attrs: LogConfig, log: Log) => void): void
     /**
      * Fires before the test and all **before** and **beforeEach** hooks run.
      * @see https://on.cypress.io/catalog-of-events#App-Events
@@ -4733,24 +4733,44 @@ declare namespace Cypress {
   }
 
   interface Log {
+    /** Set the `state` of the log to 'failed'. This will indicate an error to the Command Log UI in the form of red text. It will also automatically add `Error` to the `consoleProps` object */
+    error(err: Error): Log
+    /** Ends a log. This will set the `state` of the log to 'passed'. */
     end(): Log
-    finish(): void
+    /** Creates a snapshot and then ends the log */
+    finish(): Log
+    /** Get a property of the log by its name */
     get<K extends keyof LogConfig>(attr: K): LogConfig[K]
+    /** Get all properties of the log */
     get(): LogConfig
+    /**
+     * Set an attribute of the log by its name. This is useful if you know an attribute of a log after it was created or want to change an attribute between snapshots. This will trigger the event 'log:changed'.
+     * @see https://on.cypress.io/catalog-of-events#App-Events
+     */
     set<K extends keyof LogConfig>(key: K, value: LogConfig[K]): Log
+    /**
+     * Set one or more attributes of the log. This is useful if you know an attribute of a log after it was created or want to change an attribute between snapshots. This will trigger the event 'log:changed'.
+     * @see https://on.cypress.io/catalog-of-events#App-Events
+     */
     set(options: Partial<LogConfig>): Log
+    /**
+     * Take a DOM snapshot. Snapshots are used for time-travel debugging.
+     * @param name
+     * @param options
+     */
     snapshot(name?: string, options?: { at?: number, next: string }): Log
   }
 
   interface LogConfig {
-    /** The JQuery element for the command. This will highlight the command in the main window when debugging */
+    /** The JQuery element for the command. This will highlight the command in the main window when debugging. A snapshot is required to see this */
     $el: JQuery
     /** Allows the name of the command to be overwritten */
     name: string
     /** Override *name* for display purposes only */
     displayName: string
-    message: any[]
-    /** Return an object that will be printed in the dev tools console */
+    /** Command args */
+    message: string | any[]
+    /** Return an object that will be printed in the dev tools console.  */
     consoleProps(): ObjectLike
   }
 
